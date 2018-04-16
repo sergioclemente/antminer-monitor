@@ -274,11 +274,11 @@ def activate_job():
         global AGENT_INTERVAL_SECS
         lightweight_last_run_time = 0
         lightweight_interval_secs = 5
-        last_email_message = None
+        last_body_message = None
         while True:
             try:
                 messages = []
-                has_errors = False                
+                has_errors = False
                 has_warnings = False
 
                 # Light check (HTTP connect)
@@ -288,7 +288,7 @@ def activate_job():
                     inactive_miners = try_http_connect(
                         miners=miners, timeout=5)
                     for inactive_miner in inactive_miners:
-                        msg = "Miner {} not accessible".format(
+                        msg = "Miner {} not accessible (HTTP Connect)".format(
                             inactive_miner.ip)
                         messages.append(("error", msg))
                         log_miner_event(inactive_miner, "error", msg)
@@ -306,7 +306,7 @@ def activate_job():
                         if not miner_status:
                             # Log event
                             messages.append(
-                                ("error", "Miner {} not accessible".format(miner.ip)))
+                                ("error", "Miner {} not accessible (CG Miner)".format(miner.ip)))
                             log_miner_event(
                                 miner, "error", "Miner not accessible")
                             has_errors = True
@@ -326,32 +326,33 @@ def activate_job():
                     last_run_time = time.time()
 
                 # Update status
-                last_status_is_ok = len(messages) == 0
+                if cgminer_check:
+                    last_status_is_ok = len(messages) == 0
                 #assert (has_errors or has_warnings) == len(messages) > 0
-                if not last_status_is_ok:
-                    body_html = (render_without_request("active_miners.html", active_miner_instances=active_miner_instances) +
-                                 render_without_request("messages.html", messages=messages))
+                if len(messages) <> 0:
+                    body_message = render_without_request("messages.html", messages=messages);
+                    body_html = (body_message + render_without_request("active_miners.html", active_miner_instances=active_miner_instances))
                     body_plain = "Error founds while monitoring. Please go to {}\n".format(
                         config.DOMAIN_ADDR)
                     # Just send the error email if it changed
-                    if last_email_message <> body_html:
+                    if last_body_message <> body_message:
                         if has_errors:
                             email_title = "Monitoring Error"
                         else:
                             email_title = "Monitoring warning"
                         for i in range(0, 10):
                             if send_email(config.GMAIL_USER, config.GMAIL_PWD, config.EMAIL_TO, email_title, body_html, body_plain):
-                                last_email_message = body_html
+                                last_body_message = body_message
                                 break
                             logger.warn(
                                 "Failure sending email, retrying... #{}".format(i))
                     else:
                         logger.debug("Email the same as previous... skipping...")
                 else:
-                    if not last_email_message is None and cgminer_check:
+                    if not last_body_message is None and cgminer_check:
                         msg = "All miners are working as expected"
                         send_email(config.GMAIL_USER, config.GMAIL_PWD, config.EMAIL_TO, "Monitor Success", msg, msg);
-                        last_email_message = None
+                        last_body_message = None
             except Exception as e:
                 logger.error("Error. Message:{}".format(e.message))
                 last_status_is_ok = False
