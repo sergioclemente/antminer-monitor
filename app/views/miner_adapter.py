@@ -34,13 +34,6 @@ class MinersStatus(object):
         if defective_chip_count > 0:
             self.errors.add("[WARNING] '{}' chips are defective on miner '{}'.".format(
                 defective_chip_count, miner.ip))
-        if working_chip_count + defective_chip_count < expected_chip_count:
-            error_message = "[ERROR] ASIC chips are missing from miner '{}'. Your Antminer '{}' has '{}/{} chips'." \
-                .format(miner.ip,
-                        miner.model.model,
-                        working_chip_count + defective_chip_count,
-                        expected_chip_count)
-            self.errors.add(error_message)
         if temps and max(temps) >= miner.model.high_temp:
             error_message = "[WARNING] High temperatures on miner '{}'.".format(
                 miner.ip)
@@ -51,9 +44,25 @@ class MinersStatus(object):
         # is either starting or malfunctioning.
         # TODO: This potentially have a bug because I am not converting the hash units.
         target_hashrate = int(miner.model.hashrate_value * 0.8)
-        if hashrate_value < target_hashrate:
+        low_hashrate = hashrate_value < target_hashrate
+        if low_hashrate:
             self.errors.add("[ERROR] Hashrate {:3.2f}{} is much smaller than the target {:3.2f}{} on {}".format(hashrate_value, hashrate_unit, target_hashrate, miner.model.hashrate_unit, miner.ip))
-
+        # Give some slack. As long as the hashrate is fine don't worry
+        if working_chip_count + defective_chip_count < expected_chip_count:
+            if low_hashrate:
+                error_message = "[ERROR] ASIC chips are missing from miner '{}'. Your Antminer '{}' has '{}/{} chips'." \
+                    .format(miner.ip,
+                            miner.model.model,
+                            working_chip_count + defective_chip_count,
+                            expected_chip_count)
+                self.errors.add(error_message)
+            else:
+                error_message = "[WARNING] ASIC chips are missing from miner '{}'. Your Antminer '{}' has '{}/{} chips'." \
+                    .format(miner.ip,
+                            miner.model.model,
+                            working_chip_count + defective_chip_count,
+                            expected_chip_count)
+                self.debugs.add(error_message)
 
         self.miner_instance_list.append(miner_instance(worker,
                            working_chip_count,

@@ -261,7 +261,8 @@ def log_miner_event(miner, event_type, message):
             miner_id=miner.id, event_type=event_type, message=message)
         db.session.add(miner_event)
         db.session.commit()
-    except IntegrityError as e:
+    except Exception as e:
+        # there could be many types of exceptions such as: IntegrityError , database being locket, etc.
         db.session.rollback()
         logger.error("Error while logging event. Message:{}".format(e.message))
 
