@@ -241,14 +241,17 @@ def render_without_request(template_name, **template_vars):
 def try_http_connect(miners, timeout):
     failed_miners = []
     for miner in miners:
-        try:
-            url = "http://{}".format(miner.ip)
-            r = requests.get(url, timeout=timeout)
-            if r.status_code >= 500:
+        # Have a small retry loop.
+        for i in range(0, 3):
+            try:
+                url = "http://{}".format(miner.ip)
+                r = requests.get(url, timeout=timeout)
+                if r.status_code >= 500:
+                    failed_miners.append(miner)
+                break
+            except Exception as e:
+                logger.warning("Error while connecting to {}".format(e.message))
                 failed_miners.append(miner)
-        except Exception as e:
-            logger.warning("Error while connecting to {}".format(e.message))
-            failed_miners.append(miner)
 
     return failed_miners
 
