@@ -242,7 +242,7 @@ def try_http_connect(miners, timeout):
     failed_miners = []
     for miner in miners:
         # Have a small retry loop.
-        for i in range(0, 3):
+        for i in range(0, 10):
             try:
                 url = "http://{}".format(miner.ip)
                 r = requests.get(url, timeout=timeout)
@@ -250,8 +250,14 @@ def try_http_connect(miners, timeout):
                     failed_miners.append(miner)
                 break
             except Exception as e:
-                logger.warning("Error while connecting to {}".format(e.message))
-                failed_miners.append(miner)
+                # If an exception, just really consider it
+                # if its the last one, otherwise lets try
+                # again after sleeping a bit. 
+                if i == 9:
+                    logger.warning("Error while connecting to {}".format(e.message))
+                    failed_miners.append(miner)
+                else:
+                    time.sleep(1)
 
     return failed_miners
 
