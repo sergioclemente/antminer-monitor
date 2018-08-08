@@ -175,6 +175,17 @@ def restart_miner(id):
         flash("Error while restarting {} - {}".format(miner.ip, json.dumps(status)))
     return redirect(url_for('miners'))
 
+@app.route('/quit/<id>')
+@requires_auth
+def quit_miner(id):
+    miner = Miner.query.filter_by(id=int(id)).first()
+    cgminer = CgminerAPI(host=miner.ip)
+    status = cgminer.quit()
+    if status['STATUS'] == "BYE":
+        flash("Miner {} shutdown successfully".format(miner.ip), "warning")
+    else:
+        flash("Error while shutting down {} - {}".format(miner.ip, json.dumps(status)))
+    return redirect(url_for('miners'))
 
 @app.route('/<ip>/summary')
 @requires_auth

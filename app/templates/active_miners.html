@@ -18,6 +18,7 @@
                 {%- if is_request %}
                 <th>JSON Info</th>
                 <th>Restart</th>
+                <th>Quit</th>
                 <th>Remove</th>
                 {%- endif %}
             </tr>
@@ -48,6 +49,11 @@
                 <td>
                     <a href="#" onclick="onRestart('{{ url_for_ex( 'restart_miner', id=miner_instance.miner.id) }}', '{{miner_instance.miner.ip}}')">
                         <img src="static/images/assets/restart.png"></img>
+                    </a>
+                </td>
+                <td>
+                    <a href="#" onclick="onQuit('{{ url_for_ex( 'quit_miner', id=miner_instance.miner.id) }}', '{{miner_instance.miner.ip}}')">
+                        <img src="static/images/assets/quit.png"></img>
                     </a>
                 </td>
                 <td>

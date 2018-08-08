@@ -64,6 +64,12 @@
                     this.document.location.href = restart_url;
                 }
             }
+            // Confirm dialog for quit
+            function onQuit(quit_url, ip) {
+                if (window.confirm("Are you want you want to shutdown cgminer " + ip + "?")) {
+                    this.document.location.href = quit_url;
+                }
+            }
         </script>
 </body>
 
